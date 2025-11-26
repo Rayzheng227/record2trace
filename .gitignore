@@ -12,3 +12,4 @@ wheels/
 # Virtual environments
 .venv
 reference_code/
+maps/sunnyvale.json # to large
