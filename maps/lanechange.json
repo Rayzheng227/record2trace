@@ -1,0 +1,453 @@
+{
+  "header": {
+    "version": "MS41MDAwMDA=",
+    "date": "MjAxOC0wMy0yM1QxMzoyNzo1NA==",
+    "projection": {
+      "proj": "+proj=utm +zone=10 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
+    },
+    "district": "MA==",
+    "rev_major": "MQ==",
+    "rev_minor": "MA==",
+    "left": -127.48876721916434,
+    "top": 1.1071479475609244e-06,
+    "right": -127.48876721916434,
+    "bottom": 1.1071479475609244e-06,
+    "vendor": "QURTVg==",
+    "generation": ""
+  },
+  "lane": [
+    {
+      "id": {
+        "id": "lane_0"
+      },
+      "central_curve": {
+        "segment": [
+          {
+            "line_segment": {
+              "point": [
+                {
+                  "x": 0.0,
+                  "y": 1.75,
+                  "z": 0.0
+                },
+                {
+                  "x": 1000.0,
+                  "y": 1.75,
+                  "z": 0.0
+                }
+              ]
+            },
+            "s": 0.0,
+            "start_position": {
+              "x": 0.0,
+              "y": 1.75,
+              "z": 0.0
+            },
+            "length": 1000.0,
+            "heading": 0.0
+          }
+        ]
+      },
+      "left_boundary": {
+        "curve": {
+          "segment": [
+            {
+              "line_segment": {
+                "point": [
+                  {
+                    "x": 0.0,
+                    "y": 3.5,
+                    "z": 0.0
+                  },
+                  {
+                    "x": 1000.0,
+                    "y": 3.5,
+                    "z": 0.0
+                  }
+                ]
+              },
+              "s": 0.0,
+              "start_position": {
+                "x": 0.0,
+                "y": 3.5,
+                "z": 0.0
+              },
+              "length": 1000.0,
+              "heading": 0.0
+            }
+          ]
+        },
+        "length": 1000.0,
+        "boundary_type": [
+          {
+            "s": 0.0,
+            "types": [
+              "CURB"
+            ]
+          }
+        ],
+        "virtual": false
+      },
+      "right_boundary": {
+        "curve": {
+          "segment": [
+            {
+              "line_segment": {
+                "point": [
+                  {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  {
+                    "x": 1000.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                ]
+              },
+              "s": 0.0,
+              "start_position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "length": 1000.0,
+              "heading": 0.0
+            }
+          ]
+        },
+        "length": 1000.0,
+        "boundary_type": [
+          {
+            "types": [
+              "DOTTED_WHITE"
+            ],
+            "s": 0.0
+          }
+        ],
+        "virtual": false
+      },
+      "length": 1000.0,
+      "speed_limit": 22.22222222222222,
+      "right_neighbor_forward_lane_id": [
+        {
+          "id": "lane_1"
+        }
+      ],
+      "type": "CITY_DRIVING",
+      "turn": "NO_TURN",
+      "left_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "right_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "direction": "FORWARD",
+      "left_road_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "right_road_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "overlap_id": [],
+      "predecessor_id": [],
+      "successor_id": [],
+      "left_neighbor_forward_lane_id": [],
+      "left_neighbor_reverse_lane_id": [],
+      "right_neighbor_reverse_lane_id": [],
+      "self_reverse_lane_id": []
+    },
+    {
+      "id": {
+        "id": "lane_1"
+      },
+      "central_curve": {
+        "segment": [
+          {
+            "line_segment": {
+              "point": [
+                {
+                  "x": 0.0,
+                  "y": -1.75,
+                  "z": 0.0
+                },
+                {
+                  "x": 1000.0,
+                  "y": -1.75,
+                  "z": 0.0
+                }
+              ]
+            },
+            "s": 0.0,
+            "start_position": {
+              "x": -1.75,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "length": 1000.0,
+            "heading": 0.0
+          }
+        ]
+      },
+      "left_boundary": {
+        "curve": {
+          "segment": [
+            {
+              "line_segment": {
+                "point": [
+                  {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  },
+                  {
+                    "x": 1000.0,
+                    "y": 0.0,
+                    "z": 0.0
+                  }
+                ]
+              },
+              "s": 0.0,
+              "start_position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "length": 1000.0,
+              "heading": 0.0
+            }
+          ]
+        },
+        "length": 1000.0,
+        "boundary_type": [
+          {
+            "s": 0.0,
+            "types": [
+              "DOTTED_WHITE"
+            ]
+          }
+        ],
+        "virtual": false
+      },
+      "right_boundary": {
+        "curve": {
+          "segment": [
+            {
+              "line_segment": {
+                "point": [
+                  {
+                    "x": 0.0,
+                    "y": -3.5,
+                    "z": 0.0
+                  },
+                  {
+                    "x": 1000.0,
+                    "y": -3.5,
+                    "z": 0.0
+                  }
+                ]
+              },
+              "s": 0.0,
+              "start_position": {
+                "x": 1000.0,
+                "y": -3.5,
+                "z": 0.0
+              },
+              "length": 1000.0,
+              "heading": 0.0
+            }
+          ]
+        },
+        "length": 1000.0,
+        "boundary_type": [
+          {
+            "types": [
+              "CURB"
+            ],
+            "s": 0.0
+          }
+        ],
+        "virtual": false
+      },
+      "length": 1000.0,
+      "speed_limit": 22.22222222222222,
+      "left_neighbor_forward_lane_id": [
+        {
+          "id": "lane_0"
+        }
+      ],
+      "type": "CITY_DRIVING",
+      "turn": "NO_TURN",
+      "left_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "right_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "direction": "FORWARD",
+      "left_road_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "right_road_sample": [
+        {
+          "s": 0.0,
+          "width": 1.75
+        },
+        {
+          "s": 1000.0,
+          "width": 1.75
+        }
+      ],
+      "overlap_id": [],
+      "predecessor_id": [],
+      "successor_id": [],
+      "right_neighbor_forward_lane_id": [],
+      "left_neighbor_reverse_lane_id": [],
+      "right_neighbor_reverse_lane_id": [],
+      "self_reverse_lane_id": []
+    }
+  ],
+  "road": [
+    {
+      "id": {
+        "id": "road_0"
+      },
+      "section": [
+        {
+          "id": {
+            "id": "1"
+          },
+          "lane_id": [
+            {
+              "id": "lane_0"
+            },
+            {
+              "id": "lane_1"
+            }
+          ],
+          "boundary": {
+            "outer_polygon": {
+              "edge": [
+                {
+                  "curve": {
+                    "segment": [
+                      {
+                        "line_segment": {
+                          "point": [
+                            {
+                              "x": 0.0,
+                              "y": 3.5,
+                              "z": 0.0
+                            },
+                            {
+                              "x": 1000.0,
+                              "y": 3.5,
+                              "z": 0.0
+                            }
+                          ]
+                        },
+                        "s": 0.0,
+                        "heading": 0.0,
+                        "length": 0.0
+                      }
+                    ]
+                  },
+                  "type": "LEFT_BOUNDARY"
+                },
+                {
+                  "curve": {
+                    "segment": [
+                      {
+                        "line_segment": {
+                          "point": [
+                            {
+                              "x": 0.0,
+                              "y": -3.5,
+                              "z": 0.0
+                            },
+                            {
+                              "x": 1000.0,
+                              "y": -3.5,
+                              "z": 0.0
+                            }
+                          ]
+                        },
+                        "s": 0.0,
+                        "heading": 0.0,
+                        "length": 0.0
+                      }
+                    ]
+                  },
+                  "type": "RIGHT_BOUNDARY"
+                }
+              ]
+            },
+            "hole": []
+          }
+        }
+      ],
+      "type": "UNKNOWN"
+    }
+  ],
+  "crosswalk": [],
+  "junction": [],
+  "stop_sign": [],
+  "signal": [],
+  "yield": [],
+  "overlap": [],
+  "clear_area": [],
+  "speed_bump": [],
+  "parking_space": [],
+  "pnc_junction": [],
+  "rsu": []
+}

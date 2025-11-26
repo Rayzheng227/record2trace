@@ -1,0 +1,13 @@
+[project]
+name = "record2trace"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cyber-record>=0.1.12",
+    "numpy>=2.3.5",
+    "selenium>=4.38.0",
+    "shapely>=2.1.2",
+    "tqdm>=4.67.1",
+]
