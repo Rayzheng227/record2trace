@@ -12,5 +12,11 @@ wheels/
 # Virtual environments
 .venv
 reference_code/
-maps/sunnyvale.json # to large
-raw_record/
+
+# Ignore contents but keep directories
+maps/*
+!maps/.gitkeep
+raw_record/*
+!raw_record/.gitkeep
+output/*
+!output/.gitkeep
