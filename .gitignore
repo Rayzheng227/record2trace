@@ -13,3 +13,4 @@ wheels/
 .venv
 reference_code/
 maps/sunnyvale.json # to large
+raw_record/
