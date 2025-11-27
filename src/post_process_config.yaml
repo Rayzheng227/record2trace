@@ -1,0 +1,46 @@
+# 后处理信号阈值配置
+
+# 纵向基础信号
+longitudinal:
+  # 动态安全距离参数: d_safe = d0 + k * v_ego
+  d_safe_d0: 2.0          # 基础安全距离 (m)
+  d_safe_k: 1.0           # 速度系数 (s)
+  
+  # TTC/THW计算
+  min_velocity_thw: 0.1   # 计算THW时的最小速度阈值 (m/s)
+  min_velocity_ttc: 0.1   # 计算TTC时的最小相对速度阈值 (m/s)
+
+# 纵向动作&制动
+braking:
+  hard_brake_accel: -2.0        # 强制制动加速度阈值 (m/s²)
+  hard_brake_percentage: 20.0   # 强制制动刹车百分比阈值 (%)
+  
+# 横向/车道相关
+lateral:
+  lane_offset_threshold: 1.5    # 判断是否在车道内的横向偏移阈值 (m)
+  gap_safe_front_min: 10.0      # 变道前方最小安全距离 (m)
+  gap_safe_rear_min: 5.0        # 变道后方最小安全距离 (m)
+
+# 红灯/停车线相关
+traffic_light:
+  red_light_range: 50.0         # 红灯响应范围 (m)
+  
+# Stop Sign相关
+stop_sign:
+  stop_sign_range: 30.0         # Stop Sign响应范围 (m)
+
+# 人行横道/行人相关
+crosswalk:
+  crosswalk_buffer: 2.0         # 人行横道缓冲区 (m)
+
+# 任务层/停滞
+mission:
+  destination_threshold: 5.0    # 到达目的地的距离阈值 (m)
+  stopped_velocity: 0.1         # 判断静止的速度阈值 (m/s)
+  unjustified_stop_duration: 10.0  # 不合理停滞时长阈值 (s)
+  unjustified_stop_front_dist: 20.0  # 判断前方阻塞的距离阈值 (m)
+
+# 默认值
+defaults:
+  infinity: 999.0               # 无穷大的默认值
+  default_distance: 200.0       # 默认最大检测距离

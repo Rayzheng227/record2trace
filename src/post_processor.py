@@ -1,7 +1,9 @@
 """后处理模块 - 计算派生字段"""
 import math
+import yaml
+from pathlib import Path
 from typing import Dict, List, Optional
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon, Point, LineString
 
 from .config import DEFAULT_DISTANCE
 
@@ -9,14 +11,27 @@ from .config import DEFAULT_DISTANCE
 class PostProcessor:
     """轨迹后处理器，计算派生字段"""
     
-    def __init__(self, map_info):
+    def __init__(self, map_info, config_path: Optional[str] = None):
         """
         初始化后处理器
         
         Args:
             map_info: 地图信息对象
+            config_path: 配置文件路径，如果为None则使用默认配置
         """
         self.map_info = map_info
+        
+        # 加载配置
+        if config_path is None:
+            config_file = Path(__file__).parent / 'post_process_config.yaml'
+        else:
+            config_file = Path(config_path)
+        
+        with open(config_file, 'r', encoding='utf-8') as f:
+            self.config = yaml.safe_load(f)
+        
+        # 用于跟踪停滞时长
+        self.stopped_duration_tracker = {}
     
     def process_trace(self, trace: Dict) -> Dict:
         """
@@ -83,6 +98,9 @@ class PostProcessor:
         
         # 检查优先级车辆和行人
         self._find_priority_npcs_and_peds(trace, timestamps, current_idx)
+        
+        # 计算高级信号（新增）
+        self._calculate_advanced_signals(trace, timestamps, current_idx)
     
     def _get_current_lane(self, ego: Dict) -> Dict:
         """获取自车当前车道信息"""
@@ -704,3 +722,264 @@ class PostProcessor:
         vx = vel.get('x', 0)
         vy = vel.get('y', 0)
         return math.sqrt(vx*vx + vy*vy)
+    
+    # ========== 以下是新增的后处理信号 ==========
+    
+    def _calculate_advanced_signals(self, trace: Dict, timestamps: List[float], current_idx: int):
+        """计算高级信号（需要在_process_temporal_fields中调用）"""
+        current_ts = timestamps[current_idx]
+        trace_point = trace[current_ts]
+        ego = trace_point["ego"]
+        truth = trace_point["truth"]
+        traffic_lights = trace_point.get("traffic_lights", {})
+        
+        # 一、纵向基础信号
+        self._calculate_longitudinal_signals(ego, truth)
+        
+        # 二、纵向动作&制动
+        self._calculate_braking_signals(trace, timestamps, current_idx)
+        
+        # 三、横向/车道相关
+        self._calculate_lateral_signals(ego, truth)
+        
+        # 四、红灯/停车线/Stop Sign相关
+        self._calculate_traffic_control_signals(ego, traffic_lights)
+        
+        # 五、人行横道/行人相关
+        self._calculate_crosswalk_signals(ego, truth)
+        
+        # 六、任务层/停滞
+        self._calculate_mission_signals(trace, timestamps, current_idx)
+    
+    def _calculate_longitudinal_signals(self, ego: Dict, truth: Dict):
+        """计算纵向基础信号"""
+        cfg = self.config['longitudinal']
+        inf = self.config['defaults']['infinity']
+        
+        # v_ego: 自车纵向速度
+        ego["v_ego"] = self._get_ego_speed(ego)
+        
+        # front_dist: 最近前车距离
+        ego["front_dist"] = truth.get("minDistToEgo", inf)
+        
+        # d_safe: 动态安全距离
+        d0 = cfg['d_safe_d0']
+        k = cfg['d_safe_k']
+        ego["d_safe"] = d0 + k * ego["v_ego"]
+        
+        # v_rel_front: 相对前车的纵向速度
+        front_npc_id = truth.get("NPCAhead")
+        if front_npc_id:
+            # 查找前车速度
+            v_front = 0
+            for obs in truth.get("obsList", []):
+                if obs.get("id") == front_npc_id:
+                    v_front = obs.get("speed", 0)
+                    break
+            ego["v_rel_front"] = ego["v_ego"] - v_front
+        else:
+            # 没有前车，保守认为相对速度等于自身速度
+            ego["v_rel_front"] = ego["v_ego"]
+        
+        # thw_front: Time-headway
+        min_vel = cfg['min_velocity_thw']
+        if ego["v_ego"] > min_vel:
+            ego["thw_front"] = ego["front_dist"] / ego["v_ego"]
+        else:
+            ego["thw_front"] = inf
+        
+        # ttc_front: 近似TTC
+        min_vel_ttc = cfg['min_velocity_ttc']
+        if ego["v_rel_front"] > min_vel_ttc:
+            ego["ttc_front"] = ego["front_dist"] / ego["v_rel_front"]
+        else:
+            ego["ttc_front"] = inf
+    
+    def _calculate_braking_signals(self, trace: Dict, timestamps: List[float], current_idx: int):
+        """计算纵向动作&制动信号"""
+        cfg = self.config['braking']
+        current_ts = timestamps[current_idx]
+        ego = trace[current_ts]["ego"]
+        
+        # a_ego: 自车纵向加速度
+        if current_idx > 0:
+            prev_ts = timestamps[current_idx - 1]
+            prev_ego = trace[prev_ts]["ego"]
+            dt = current_ts - prev_ts
+            
+            v_current = ego.get("v_ego", 0)
+            v_prev = prev_ego.get("v_ego", 0)
+            
+            if dt > 0:
+                ego["a_ego"] = (v_current - v_prev) / dt
+            else:
+                ego["a_ego"] = 0
+        else:
+            ego["a_ego"] = 0
+        
+        # HardBrake: 强制制动标志
+        brake_percentage = ego.get("Chassis", {}).get("brakePercentage", 0)
+        hard_brake_accel = cfg['hard_brake_accel']
+        hard_brake_pct = cfg['hard_brake_percentage']
+        
+        ego["HardBrake"] = (ego["a_ego"] < hard_brake_accel) or (brake_percentage > hard_brake_pct)
+        
+        # IsLaneChanging: 当前帧是否处于变道状态 (已经在_process_temporal_fields中计算)
+        # 这里只需要使用
+        
+        # LaneChangeStarted / LaneChangeFinished: 变道开始/结束事件
+        if current_idx > 0:
+            prev_ts = timestamps[current_idx - 1]
+            prev_ego = trace[prev_ts]["ego"]
+            
+            is_changing_now = ego.get("isLaneChanging", False)
+            was_changing = prev_ego.get("isLaneChanging", False)
+            
+            ego["LaneChangeStarted"] = (not was_changing) and is_changing_now
+            ego["LaneChangeFinished"] = was_changing and (not is_changing_now)
+        else:
+            ego["LaneChangeStarted"] = False
+            ego["LaneChangeFinished"] = False
+        
+        # BrakeOrLaneChange: 采取行动标志
+        ego["BrakeOrLaneChange"] = ego["HardBrake"] or ego.get("isLaneChanging", False)
+    
+    def _calculate_lateral_signals(self, ego: Dict, truth: Dict):
+        """计算横向/车道相关信号"""
+        cfg = self.config['lateral']
+        
+        # lat_offset: 相对车道中心线的横向偏移
+        # TODO: 需要地图提供车道中心线，这里简化处理
+        ego["lat_offset"] = 0  # 简化为0，实际需要投影计算
+        
+        # InLane: 是否在合法车道/可行驶区域内
+        current_lane = ego.get("currentLane", {})
+        lane_id = current_lane.get("currentLaneId")
+        
+        if lane_id is not None:
+            # 粗略判断：有车道ID且偏移小于阈值
+            ego["InLane"] = abs(ego["lat_offset"]) < cfg['lane_offset_threshold']
+        else:
+            ego["InLane"] = False
+        
+        # GapSafe: 变道目标车道空隙是否安全
+        # TODO: 需要知道目标车道，这里简化处理
+        ego["GapSafe"] = True  # 简化为True，实际需要复杂判断
+    
+    def _calculate_traffic_control_signals(self, ego: Dict, traffic_lights: Dict):
+        """计算红灯/停车线/Stop Sign相关信号"""
+        cfg_light = self.config['traffic_light']
+        cfg_stop = self.config['stop_sign']
+        inf = self.config['defaults']['infinity']
+        
+        # 红绿灯相关
+        traffic_light_list = traffic_lights.get("trafficLightList", [])
+        traffic_light_dist = traffic_lights.get("trafficLightStopLine", inf)
+        
+        # RedLightAhead: 前方存在需要响应的红灯
+        red_light_ahead = False
+        if traffic_light_list:
+            nearest_idx = traffic_lights.get("nearest", -1)
+            if 0 <= nearest_idx < len(traffic_light_list):
+                nearest_light = traffic_light_list[nearest_idx]
+                color = nearest_light.get("color", "")
+                red_light_ahead = (color == "RED") and (traffic_light_dist < cfg_light['red_light_range'])
+        
+        ego["RedLightAhead"] = red_light_ahead
+        
+        # DistToRedStopLine: 到红灯对应停车线的距离
+        if red_light_ahead:
+            ego["DistToRedStopLine"] = traffic_light_dist
+        else:
+            ego["DistToRedStopLine"] = inf
+        
+        # ShouldStopForRed: 当前是否应准备在红灯前停车
+        ego["ShouldStopForRed"] = red_light_ahead and (traffic_light_dist < cfg_light['red_light_range'])
+        
+        # Stop Sign相关
+        stop_sign_dist = ego.get("stopSignAhead", inf)
+        
+        # StopSignAhead: 前方存在Stop Sign
+        ego["StopSignAhead"] = stop_sign_dist < cfg_stop['stop_sign_range']
+        
+        # DistToStopSign / DistToStopLine: 到Stop Sign/停止线距离
+        ego["DistToStopSign"] = stop_sign_dist
+        ego["DistToStopLine"] = ego.get("stoplineAhead", inf)
+        
+        # ShouldStopAtStopSign
+        ego["ShouldStopAtStopSign"] = ego["StopSignAhead"] and (stop_sign_dist < cfg_stop['stop_sign_range'])
+    
+    def _calculate_crosswalk_signals(self, ego: Dict, truth: Dict):
+        """计算人行横道/行人相关信号"""
+        inf = self.config['defaults']['infinity']
+        
+        # PedInCrosswalk: 人行横道中存在行人
+        ped_in_crosswalk = False
+        crosswalks = self.map_info.get_crosswalk_config()
+        
+        for obs in truth.get("obsList", []):
+            if obs.get("type") != "PEDESTRIAN":
+                continue
+            
+            # 获取行人位置
+            pos = obs.get("position", {})
+            ped_point = Point(pos.get("x", 0), pos.get("y", 0))
+            
+            # 检查是否在任何人行横道内
+            for cw_area in crosswalks.values():
+                if cw_area.contains(ped_point) or cw_area.distance(ped_point) < self.config['crosswalk']['crosswalk_buffer']:
+                    ped_in_crosswalk = True
+                    break
+            
+            if ped_in_crosswalk:
+                break
+        
+        ego["PedInCrosswalk"] = ped_in_crosswalk
+        
+        # DistToCrosswalk: 到最近前方人行横道横断面的距离
+        ego["DistToCrosswalk"] = ego.get("crosswalkAhead", inf)
+    
+    def _calculate_mission_signals(self, trace: Dict, timestamps: List[float], current_idx: int):
+        """计算任务层/停滞信号"""
+        cfg = self.config['mission']
+        inf = self.config['defaults']['infinity']
+        
+        current_ts = timestamps[current_idx]
+        ego = trace[current_ts]["ego"]
+        truth = trace[current_ts]["truth"]
+        
+        # ReachDestination: 是否到达目的地 (已经在_process_temporal_fields中设置)
+        # 这里不需要重复计算
+        
+        # StoppedDuration: 当前这次连续静止的时长
+        v_ego = ego.get("v_ego", 0)
+        stopped_threshold = cfg['stopped_velocity']
+        
+        if current_idx > 0:
+            prev_ts = timestamps[current_idx - 1]
+            prev_ego = trace[prev_ts]["ego"]
+            dt = current_ts - prev_ts
+            
+            if v_ego < stopped_threshold:
+                # 当前静止，累加时长
+                ego["StoppedDuration"] = prev_ego.get("StoppedDuration", 0) + dt
+            else:
+                # 当前运动，重置
+                ego["StoppedDuration"] = 0
+        else:
+            ego["StoppedDuration"] = 0
+        
+        # UnjustifiedStop: 不合理停滞标志
+        stopped_duration = ego.get("StoppedDuration", 0)
+        red_light = ego.get("RedLightAhead", False)
+        ped_in_cw = ego.get("PedInCrosswalk", False)
+        front_dist = ego.get("front_dist", inf)
+        
+        unjustified_conditions = (
+            stopped_duration > cfg['unjustified_stop_duration'] and
+            not red_light and
+            not ped_in_cw and
+            front_dist > cfg['unjustified_stop_front_dist']
+        )
+        
+        ego["UnjustifiedStop"] = unjustified_conditions
